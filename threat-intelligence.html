@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Intelligence - MailGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cyber-dark: #0a0e1a;
+            --cyber-blue: #00d4ff;
+            --cyber-cyan: #06b6d4;
+            --cyber-green: #10b981;
+            --cyber-red: #ef4444;
+            --cyber-amber: #f59e0b;
+            --cyber-gray: #1f2937;
+        }
+        
+        * {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="%2300d4ff"/><circle cx="12" cy="12" r="8" fill="none" stroke="%2300d4ff" stroke-width="1" opacity="0.3"/></svg>'), auto;
+        }
+        
+        body {
+            background: var(--cyber-dark);
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+        }
+        
+        .glass-panel {
+            background: rgba(31, 41, 55, 0.3);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-panel:hover {
+            border-color: var(--cyber-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--cyber-blue);
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-secure { background: var(--cyber-green); }
+        .status-warning { background: var(--cyber-amber); }
+        .status-danger { background: var(--cyber-red); }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chart-container {
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        
+        .threat-item {
+            background: rgba(31, 41, 55, 0.4);
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .threat-item:hover {
+            background: rgba(31, 41, 55, 0.6);
+            transform: translateX(4px);
+        }
+        
+        .threat-critical { border-left-color: var(--cyber-red); }
+        .threat-high { border-left-color: #dc2626; }
+        .threat-medium { border-left-color: var(--cyber-amber); }
+        .threat-low { border-left-color: var(--cyber-green); }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .data-table {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        
+        .data-table th {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--cyber-blue);
+            font-weight: 600;
+        }
+        
+        .data-table td {
+            border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        
+        .data-table tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-50 backdrop-blur-md border-b border-cyan-500 border-opacity-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-cyan-600 rounded-md flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 3l8 4v5c0 5-3.5 9-8 9s-8-4-8-9V7l8-4z"/>
+                            </svg>
+                        </div>
+                        <span class="text-white font-bold text-xl">MailGuard</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-secure"></div>
+                        <span class="text-green-400 text-sm">Protected</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="nav-link">Dashboard</a>
+                    <a href="threat-intelligence.html" class="nav-link active">Threat Intel</a>
+                    <a href="settings.html" class="nav-link">Settings</a>
+                    <div class="flex items-center space-x-2 bg-gray-800 bg-opacity-50 px-3 py-1 rounded-lg">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-red-400 text-sm code-font">3 Active Threats</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="pt-20 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-white mb-4">🚧 Work in progress — sample data shown</h1>
+                <p class="text-xl text-cyan-300 mb-6">Tracking threats across incoming emails</p>
+                <div class="inline-flex items-center space-x-2 bg-red-900 bg-opacity-50 border border-red-500 border-opacity-30 px-4 py-2 rounded-lg">
+                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="text-red-300 text-sm">Test environment</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pb-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-cyan-400 font-bold text-lg">Total Analyzed</h3>
+                        <span class="text-2xl">📊</span>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">15,847</div>
+                    <div class="text-sm text-gray-400">Emails processed</div>
+                    <div class="text-xs text-green-400 mt-1">↑ 12% this month</div>
+                </div>
+                
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-red-400 font-bold text-lg">Threats Detected</h3>
+                        <span class="text-2xl">🚨</span>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">2,156</div>
+                    <div class="text-sm text-gray-400">Malicious emails</div>
+                    <div class="text-xs text-red-400 mt-1">↑ 8% this month</div>
+                </div>
+                
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-green-400 font-bold text-lg">Blocked</h3>
+                        <span class="text-2xl">🛡️</span>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">1,892</div>
+                    <div class="text-sm text-gray-400">Successfully prevented</div>
+                    <div class="text-xs text-green-400 mt-1">↑ 15% this month</div>
+                </div>
+                
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-amber-400 font-bold text-lg">Accuracy</h3>
+                        <span class="text-2xl">🎯</span>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-2">99.2%</div>
+                    <div class="text-sm text-gray-400">Detection rate</div>
+                    <div class="text-xs text-green-400 mt-1">↑ 0.3% this month</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Threat Timeline -->
+                <div class="glass-panel rounded-xl p-6">
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-6">Threat Activity Timeline</h3>
+                    <div id="threat-timeline" class="chart-container"></div>
+                </div>
+                
+                <!-- Threat Distribution -->
+                <div class="glass-panel rounded-xl p-6">
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-6">Threat Type Distribution</h3>
+                    <div id="threat-distribution" class="chart-container"></div>
+                </div>
+            </div>
+
+            <!-- Geographic Threat Map -->
+            <div class="glass-panel rounded-xl p-8 mb-8">
+                <h3 class="text-2xl font-bold text-cyan-400 mb-6">Geographic Threat Origins</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-white font-medium">🇺🇸 United States</span>
+                            <span class="text-red-400 font-bold">35%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: 35%"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">612 threats</div>
+                    </div>
+                    
+                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-white font-medium">🇨🇳 China</span>
+                            <span class="text-orange-400 font-bold">20%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-orange-500 h-2 rounded-full" style="width: 20%"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">349 threats</div>
+                    </div>
+                    
+                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-white font-medium">🇷🇺 Russia</span>
+                            <span class="text-amber-400 font-bold">15%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-amber-500 h-2 rounded-full" style="width: 15%"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">262 threats</div>
+                    </div>
+                    
+                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-white font-medium">🇳🇬 Nigeria</span>
+                            <span class="text-yellow-400 font-bold">12%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 12%"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">209 threats</div>
+                    </div>
+                    
+                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-white font-medium">🇮🇳 India</span>
+                            <span class="text-green-400 font-bold">8%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 8%"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">140 threats</div>
+                    </div>
+                    
+                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-white font-medium">🌍 Other</span>
+                            <span class="text-gray-400 font-bold">10%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-gray-500 h-2 rounded-full" style="width: 10%"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">175 threats</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Threat Database -->
+            <div class="glass-panel rounded-xl p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-cyan-400">Threat Database</h3>
+                    <div class="flex items-center space-x-4">
+                        <input type="text" id="threat-search" placeholder="Search threats..." 
+                               class="bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-cyan-400 focus:outline-none">
+                        <button class="bg-cyan-500 hover:bg-cyan-600 text-black px-4 py-2 rounded-lg font-medium transition-colors" onclick="searchThreats()">
+                            Search
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full data-table rounded-lg">
+                        <thead>
+                            <tr>
+                                <th class="text-left py-3 px-4">Threat ID</th>
+                                <th class="text-left py-3 px-4">Type</th>
+                                <th class="text-left py-3 px-4">Severity</th>
+                                <th class="text-left py-3 px-4">Origin</th>
+                                <th class="text-left py-3 px-4">First Seen</th>
+                                <th class="text-left py-3 px-4">Status</th>
+                                <th class="text-left py-3 px-4">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="threat-database">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-50 border-t border-cyan-500 border-opacity-20 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center space-x-2 mb-4">
+                <div class="w-8 h-8 bg-cyan-600 rounded-md flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 3l8 4v5c0 5-3.5 9-8 9s-8-4-8-9V7l8-4z"/>
+                            </svg>
+                        </div>
+                <span class="text-cyan-400 font-bold text-lg">MailGuard</span>
+            </div>
+            <p class="text-gray-400 text-sm">© 2025 MailGuard. Professional email threat detection with deterministic analysis.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Threat Intelligence Page JavaScript
+        class ThreatIntelligence {
+            async fetchThreatIntel() {
+                try {
+                    const res = await fetch('http://localhost:5000/api/threat-intelligence');
+                    return await res.json();
+                } catch {
+                    return null;
+                }
+            }
+
+            constructor() {
+                this.threatData = [];
+                this.init();
+            }
+
+            async init() {
+                const data = await this.fetchThreatIntel();
+
+                if (!data) {
+                    document.body.insertAdjacentHTML(
+                        'afterbegin',
+                        '<div class="text-center text-red-400 mt-24">Backend not running. Showing sample UI only.</div>'
+                    );
+                    return;
+                }
+
+                this.data = data;
+                this.initializeCharts(data);
+
+                this.populateThreatDatabase(data);
+                this.setupEventListeners();
+            }
+
+            initializeCharts(data) {
+                this.createThreatTimeline(data);
+                this.createThreatDistribution(data);
+            }
+
+
+            createThreatTimeline(data) {
+                if (!data || !data.weekly_trend) return;
+
+                const chart = echarts.init(document.getElementById('threat-timeline'));
+
+                const dates = data.weekly_trend.map(d => d.date);
+                const counts = data.weekly_trend.map(d => d.threats);
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(10, 22, 40, 0.9)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#ffffff' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        top: '10%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: dates,
+                        axisLine: { lineStyle: { color: '#374151' } },
+                        axisLabel: { color: '#9CA3AF' }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: { lineStyle: { color: '#374151' } },
+                        axisLabel: { color: '#9CA3AF' },
+                        splitLine: { lineStyle: { color: '#374151' } }
+                    },
+                    series: [
+                        {
+                            name: 'Total Threats',
+                            type: 'line',
+                            smooth: true,
+                            data: counts,
+                            itemStyle: { color: '#ef4444' },
+                            areaStyle: { color: 'rgba(239, 68, 68, 0.15)' }
+                        }
+                    ]
+                };
+
+                chart.setOption(option);
+                window.onresize = () => chart.resize();
+            }
+
+
+            createThreatDistribution(data) {
+                if (!data || !data.top_threat_types) return;
+
+                const chart = echarts.init(document.getElementById('threat-distribution'));
+
+                const option = {
+                    backgroundColor: 'transparent',
+                    tooltip: {
+                        trigger: 'item',
+                        backgroundColor: 'rgba(10, 22, 40, 0.9)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#ffffff' }
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        left: 'left',
+                        textStyle: { color: '#ffffff' },
+                        top: 20
+                    },
+                    series: [
+                        {
+                            name: 'Threat Types',
+                            type: 'pie',
+                            radius: ['40%', '70%'],
+                            center: ['60%', '50%'],
+                            data: [
+                                { name: 'Phishing', value: data.top_threat_types.phishing },
+                                { name: 'Scam', value: data.top_threat_types.scam },
+                                { name: 'Spam', value: data.top_threat_types.spam },
+                                { name: 'Social Engineering', value: data.top_threat_types.social_engineering }
+                            ],
+                            emphasis: {
+                                itemStyle: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 212, 255, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+
+                chart.setOption(option);
+                window.onresize = () => chart.resize();
+            }
+
+            populateThreatDatabase(data) {
+                if (!data || !data.sample_threats) return;
+
+                const threats = data.sample_threats;
+                const tbody = document.getElementById('threat-database');
+                tbody.innerHTML = '';
+
+                const severityColors = {
+                    Critical: 'text-red-400',
+                    High: 'text-orange-400',
+                    Medium: 'text-yellow-400',
+                    Low: 'text-green-400'
+                };
+
+                const statusColors = {
+                    Active: 'text-red-400',
+                    Mitigated: 'text-green-400',
+                    Blocked: 'text-gray-400',
+                    Filtered: 'text-blue-400',
+                    'Under Investigation': 'text-yellow-400'
+                };
+
+                threats.forEach(threat => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td class="py-3 px-4 code-font text-cyan-400">${threat.id}</td>
+                        <td class="py-3 px-4 text-white">${threat.type}</td>
+                        <td class="py-3 px-4 ${severityColors[threat.severity] || 'text-gray-400'} font-medium">
+                            ${threat.severity}
+                        </td>
+                        <td class="py-3 px-4 text-gray-300">${threat.origin || 'Unknown'}</td>
+                        <td class="py-3 px-4 text-gray-400">${threat.first_seen}</td>
+                        <td class="py-3 px-4 ${statusColors[threat.status] || 'text-gray-400'} font-medium">
+                            ${threat.status}
+                        </td>
+                        <td class="py-3 px-4 text-gray-300 text-sm">
+                            ${threat.description}
+                        </td>
+                    `;
+
+                    tbody.appendChild(row);
+                });
+            }
+
+
+            setupEventListeners() {
+                const searchInput = document.getElementById('threat-search');
+                if (searchInput) {
+                    searchInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            this.searchThreats();
+                        }
+                    });
+                }
+            }
+
+            searchThreats() {
+                const searchTerm = document.getElementById('threat-search').value.toLowerCase();
+                const rows = document.querySelectorAll('#threat-database tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        row.style.display = '';
+                        row.classList.add('fade-in');
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // Global search function
+        function searchThreats() {
+            if (window.threatIntelligence) {
+                window.threatIntelligence.searchThreats();
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.threatIntelligence = new ThreatIntelligence();
+        });
+    </script>
+</body>
+</html>

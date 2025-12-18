@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+.env
+interaction.md
+outline.md

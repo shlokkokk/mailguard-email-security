@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Settings - MailGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cyber-dark: #0a0e1a;
+            --cyber-blue: #00d4ff;
+            --cyber-cyan: #06b6d4;
+            --cyber-green: #10b981;
+            --cyber-red: #ef4444;
+            --cyber-amber: #f59e0b;
+            --cyber-gray: #1f2937;
+        }
+        
+        * {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="%2300d4ff"/><circle cx="12" cy="12" r="8" fill="none" stroke="%2300d4ff" stroke-width="1" opacity="0.3"/></svg>'), auto;
+        }
+        
+        body {
+            background: var(--cyber-dark);
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+        }
+        
+        .glass-panel {
+            background: rgba(31, 41, 55, 0.3);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-panel:hover {
+            border-color: var(--cyber-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--cyber-blue);
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-secure { background: var(--cyber-green); }
+        .status-warning { background: var(--cyber-amber); }
+        .status-danger { background: var(--cyber-red); }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .tab-button {
+            background: transparent;
+            border: 1px solid rgba(100, 116, 139, 0.5);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .tab-button:hover, .tab-button.active {
+            border-color: var(--cyber-blue);
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--cyber-blue);
+        }
+        
+        .setting-item {
+            background: rgba(31, 41, 55, 0.4);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .setting-item:hover {
+            border-color: var(--cyber-blue);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #374151;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--cyber-blue);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .range-slider {
+            -webkit-appearance: none;
+            appearance: none;      
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #374151;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        
+        .range-slider:hover {
+            opacity: 1;
+        }
+        
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--cyber-blue);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--cyber-blue);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        .list-item {
+            background: rgba(31, 41, 55, 0.4);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .list-item:hover {
+            border-color: var(--cyber-blue);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-cyan));
+            border: none;
+            color: var(--cyber-dark);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--cyber-blue);
+            color: var(--cyber-blue);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--cyber-blue);
+            color: var(--cyber-dark);
+        }
+        
+        .btn-danger {
+            background: transparent;
+            border: 2px solid var(--cyber-red);
+            color: var(--cyber-red);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: var(--cyber-red);
+            color: white;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-50 backdrop-blur-md border-b border-cyan-500 border-opacity-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-cyan-600 rounded-md flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 3l8 4v5c0 5-3.5 9-8 9s-8-4-8-9V7l8-4z"/>
+                            </svg>
+                        </div>
+                        <span class="text-white font-bold text-xl">MailGuard</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-secure"></div>
+                        <span class="text-green-400 text-sm">Protected</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="nav-link">Dashboard</a>
+                    <a href="threat-intelligence.html" class="nav-link">Threat Intel</a>
+                    <a href="settings.html" class="nav-link active">Settings</a>
+                    <div class="flex items-center space-x-2 bg-gray-800 bg-opacity-50 px-3 py-1 rounded-lg">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-red-400 text-sm code-font">3 Active Threats</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="pt-20 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-white mb-4">Security Settings</h1>
+                <p class="text-xl text-cyan-300 mb-6">Configure AI sensitivity, manage notifications, and customize your protection</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Settings Navigation -->
+    <section class="pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="tab-button active" data-tab="ai-config"> AI Configuration</button>
+                <button class="tab-button" data-tab="notifications">Notifications</button>
+                <button class="tab-button" data-tab="whitelist">Allowed & Blocked</button>
+                <button class="tab-button" data-tab="privacy">Privacy</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="pb-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- AI Configuration Tab -->
+            <div id="ai-config" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- AI Sensitivity -->
+                    <div class="glass-panel rounded-xl p-8">
+                        <h3 class="text-2xl font-bold text-cyan-400 mb-6">AI Sensitivity</h3>
+                        
+                        <div class="space-y-6">
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <label class="text-white font-medium">Detection Sensitivity</label>
+                                    <span class="text-cyan-400 font-bold" id="sensitivity-value">75%</span>
+                                </div>
+                                <input type="range" class="range-slider" id="sensitivity-slider" min="0" max="100" value="75">
+                                <div class="flex justify-between text-xs text-gray-400 mt-2">
+                                    <span>Conservative</span>
+                                    <span>Balanced</span>
+                                    <span>Aggressive</span>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Deep Content Analysis</label>
+                                        <p class="text-gray-400 text-sm">Scan email text in detail</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="deep-analysis" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Behavioral Analysis</label>
+                                        <p class="text-gray-400 text-sm">Flag unusual sender behavior</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="behavioral-analysis" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Link Sandboxing</label>
+                                        <p class="text-gray-400 text-sm">Open links in a safe environment</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="link-sandboxing" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Metrics -->
+                    <div class="glass-panel rounded-xl p-8">
+                        <h3 class="text-2xl font-bold text-cyan-400 mb-6">AI Performance</h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white">Detection Accuracy</span>
+                                    <span class="text-cyan-400 font-bold">99.7%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-3">
+                                    <div class="bg-gradient-to-r from-cyan-400 to-blue-500 h-3 rounded-full" style="width: 99.7%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white">False Positive Rate</span>
+                                    <span class="text-amber-400 font-bold">0.3%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-3">
+                                    <div class="bg-amber-500 h-3 rounded-full" style="width: 0.3%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white">Processing Speed</span>
+                                    <span class="text-green-400 font-bold">2.3ms</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-3">
+                                    <div class="bg-green-500 h-3 rounded-full" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white">Threat Intelligence Coverage</span>
+                                    <span class="text-cyan-400 font-bold">98.2%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-3">
+                                    <div class="bg-gradient-to-r from-cyan-400 to-blue-500 h-3 rounded-full" style="width: 98.2%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <h4 class="text-lg font-bold text-white mb-4">AI Model Status</h4>
+                            <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 border border-gray-700">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-green-400 code-font">Detection engine</span>
+                                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                </div>
+                                <div class="text-sm text-gray-400">Last updated: recently</div>
+                                <div class="text-sm text-gray-400">Next update: Scheduled</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notifications Tab -->
+            <div id="notifications" class="tab-content hidden">
+                <div class="glass-panel rounded-xl p-8">
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-6">Notification Preferences</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-4">
+                            <h4 class="text-lg font-bold text-white mb-4">Threat Alerts</h4>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Critical Threats</label>
+                                        <p class="text-gray-400 text-sm">Immediate alerts for critical threats</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="critical-alerts" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">High Priority Threats</label>
+                                        <p class="text-gray-400 text-sm">Alerts for high-risk emails</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="high-alerts" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Daily Summary</label>
+                                        <p class="text-gray-400 text-sm">Daily security report</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="daily-summary">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <h4 class="text-lg font-bold text-white mb-4">System Notifications</h4>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">AI Updates</label>
+                                        <p class="text-gray-400 text-sm">Notifications when AI models are updated</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="ai-updates" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Weekly Reports</label>
+                                        <p class="text-gray-400 text-sm">Weekly security analytics</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="weekly-reports" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h4 class="text-lg font-bold text-white mb-4">Notification Methods</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Email Notifications</label>
+                                        <p class="text-gray-400 text-sm">Send to primary email</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="email-notifications" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Push Notifications</label>
+                                        <p class="text-gray-400 text-sm">Browser push notifications</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="push-notifications">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">SMS Alerts</label>
+                                        <p class="text-gray-400 text-sm">Critical alerts via SMS</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="sms-notifications">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Whitelist/Blacklist Tab -->
+            <div id="whitelist" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Trusted Senders -->
+                    <div class="glass-panel rounded-xl p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-green-400">Trusted Senders</h3>
+                            <button class="btn-primary px-4 py-2 rounded-lg text-sm" onclick="addToWhitelist()">Add Entry</button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <input type="text" id="whitelist-input" placeholder="Enter email address or domain..." 
+                                   class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-green-400 focus:outline-none">
+                        </div>
+                        
+                        <div class="space-y-2 max-h-96 overflow-y-auto" id="whitelist-items">
+                            <!-- Whitelist items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Blocked Senders -->
+                    <div class="glass-panel rounded-xl p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-red-400">Blocked Senders</h3>
+                            <button class="btn-primary px-4 py-2 rounded-lg text-sm" onclick="addToBlacklist()">Add Entry</button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <input type="text" id="blacklist-input" placeholder="Enter email address or domain..." 
+                                   class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-red-400 focus:outline-none">
+                        </div>
+                        
+                        <div class="space-y-2 max-h-96 overflow-y-auto" id="blacklist-items">
+                            <!-- Blacklist items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Privacy Tab -->
+            <div id="privacy" class="tab-content hidden">
+                <div class="glass-panel rounded-xl p-8">
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-6">Privacy & Data Protection</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <h4 class="text-lg font-bold text-white mb-4">Data Collection</h4>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Anonymous Analytics</label>
+                                        <p class="text-gray-400 text-sm">Help improve threat detection</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="analytics" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Email Content Analysis</label>
+                                        <p class="text-gray-400 text-sm">Analyze email content for threats</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="content-analysis" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">Metadata Collection</label>
+                                        <p class="text-gray-400 text-sm">Collect email headers and metadata</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="metadata-collection" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <h4 class="text-lg font-bold text-white mb-4">Data Retention</h4>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <label class="text-white font-medium mb-2 block">Quarantine Retention</label>
+                                <select class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-cyan-400 focus:outline-none">
+                                    <option value="7">7 days</option>
+                                    <option value="30" selected>30 days</option>
+                                    <option value="90">90 days</option>
+                                    <option value="365">1 year</option>
+                                </select>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <label class="text-white font-medium mb-2 block">Log Retention</label>
+                                <select class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-cyan-400 focus:outline-none">
+                                    <option value="30">30 days</option>
+                                    <option value="90" selected>90 days</option>
+                                    <option value="365">1 year</option>
+                                    <option value="1095">3 years</option>
+                                </select>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <label class="text-white font-medium mb-2 block">Backup Frequency</label>
+                                <select class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-cyan-400 focus:outline-none">
+                                    <option value="1">Daily</option>
+                                    <option value="7" selected>Weekly</option>
+                                    <option value="30">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h4 class="text-lg font-bold text-white mb-4">Compliance Standards</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">GDPR Compliance</label>
+                                        <p class="text-gray-400 text-sm">European data protection</p>
+                                    </div>
+                                    <div class="text-green-400">✓</div>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">HIPAA Compliance</label>
+                                        <p class="text-gray-400 text-sm">Healthcare data protection</p>
+                                    </div>
+                                    <div class="text-green-400">✓</div>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-item p-4 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label class="text-white font-medium">SOC 2 Type II</label>
+                                        <p class="text-gray-400 text-sm">Security controls compliance</p>
+                                    </div>
+                                    <div class="text-green-400">✓</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex justify-center space-x-4 mt-8">
+                <button class="btn-primary px-8 py-3 rounded-lg" onclick="saveSettings()">Save Changes</button>
+                <button class="btn-secondary px-8 py-3 rounded-lg" onclick="resetSettings()">Reset to Defaults</button>
+                <button class="btn-danger px-8 py-3 rounded-lg" onclick="exportSettings()">Export Settings</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-50 border-t border-cyan-500 border-opacity-20 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center space-x-2 mb-4">
+                <div class="w-8 h-8 bg-cyan-600 rounded-md flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 3l8 4v5c0 5-3.5 9-8 9s-8-4-8-9V7l8-4z"/>
+                            </svg>
+                        </div>
+                <span class="text-cyan-400 font-bold text-lg">MailGuard</span>
+            </div>
+            <p class="text-gray-400 text-sm">© 2025 MailGuard. Professional email threat detection with deterministic analysis.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Settings Page JavaScript
+        class SettingsManager {
+            async fetchBackendSettings() {
+                try {
+                    const res = await fetch('http://localhost:5000/api/settings');
+                    if (!res.ok) throw new Error();
+                    return await res.json();
+                } catch {
+                    return null;
+                }
+            }
+
+            constructor() {
+                this.currentTab = 'ai-config';
+
+                this.init();
+            }
+
+            async init() {
+                const backendSettings = await this.fetchBackendSettings();
+                this.settings = backendSettings
+                    ? { ...this.loadSettings(), ...backendSettings }
+                    : this.loadSettings();
+
+
+                this.setupEventListeners();
+                this.populateLists();
+                this.loadCurrentSettings();
+            }
+
+
+            setupEventListeners() {
+                // Tab switching
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.tab);
+                    });
+                });
+
+                // Sensitivity slider
+                const sensitivitySlider = document.getElementById('sensitivity-slider');
+                if (sensitivitySlider) {
+                    sensitivitySlider.addEventListener('input', (e) => {
+                        const value = parseInt(e.target.value);
+                        document.getElementById('sensitivity-value').textContent = value + '%';
+                        this.settings.sensitivity = value;
+                });
+                }
+
+                // Toggle switches
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        this.updateSetting(checkbox.id, checkbox.checked);
+                    });
+                });
+            }
+
+            switchTab(tabName) {
+                // Update active tab button
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+                // Show/hide tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(tabName).classList.remove('hidden');
+
+                this.currentTab = tabName;
+
+                // Animate tab content
+                anime({
+                    targets: `#${tabName}`,
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 500,
+                    easing: 'easeOutExpo'
+                });
+            }
+
+            loadSettings() {
+                const defaultSettings = {
+                    sensitivity: 75,
+                    deepAnalysis: true,
+                    behavioralAnalysis: true,
+                    linkSandboxing: true,
+                    criticalAlerts: true,
+                    highAlerts: true,
+                    dailySummary: false,
+                    aiUpdates: true,
+                    weeklyReports: true,
+                    emailNotifications: true,
+                    pushNotifications: false,
+                    smsNotifications: false,
+                    analytics: true,
+                    contentAnalysis: true,
+                    metadataCollection: true,
+                    whitelist: ['trusted@company.com', 'ceo@company.com', 'security@company.com'],
+                    blacklist: ['spam@unknown.com', 'phishing@fakebank.com', 'malware@danger.com']
+                };
+
+                const saved = localStorage.getItem('spamshield-settings');
+                return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+            }
+
+            async saveSettings() {
+                try {
+                    const res = await fetch('http://localhost:5000/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.settings)
+                    });
+                    if (!res.ok) {
+                        throw new Error('Backend rejected settings');
+                    }
+
+                    localStorage.setItem('spamshield-settings', JSON.stringify(this.settings));
+                    this.showNotification('Settings saved successfully!', 'success');
+                } catch (err) {
+                    console.error(err);
+                    this.showNotification('Failed to save settings to backend', 'error');
+                }
+            }
+            loadCurrentSettings() {
+                // Load sensitivity
+                const sensitivitySlider = document.getElementById('sensitivity-slider');
+                if (sensitivitySlider) {
+                    sensitivitySlider.value = this.settings.sensitivity;
+                    document.getElementById('sensitivity-value').textContent = this.settings.sensitivity + '%';
+                }
+
+                // Load toggle switches
+                Object.keys(this.settings).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element && typeof this.settings[key] === 'boolean') {
+                        element.checked = this.settings[key];
+                    }
+                });
+            }
+
+            updateSetting(domId, value) {
+            const map = {
+                'deep-analysis': 'deepAnalysis',
+                'behavioral-analysis': 'behavioralAnalysis',
+                'link-sandboxing': 'linkSandboxing',
+                'critical-alerts': 'criticalAlerts',
+                'high-alerts': 'highAlerts',
+                'daily-summary': 'dailySummary',
+                'ai-updates': 'aiUpdates',
+                'weekly-reports': 'weeklyReports',
+                'email-notifications': 'emailNotifications',
+                'push-notifications': 'pushNotifications',
+                'sms-notifications': 'smsNotifications',
+                'content-analysis': 'contentAnalysis',
+                'metadata-collection': 'metadataCollection',
+                'analytics': 'analytics'
+            };
+
+            const key = map[domId];
+            if (key) {
+                this.settings[key] = value;
+            }
+        }
+
+
+            populateLists() {
+                this.populateWhitelist();
+                this.populateBlacklist();
+            }
+
+            populateWhitelist() {
+                const container = document.getElementById('whitelist-items');
+                if (!container) return;
+
+                container.innerHTML = '';
+                this.settings.whitelist.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'list-item p-3 rounded-lg flex items-center justify-between';
+                    div.innerHTML = `
+                        <span class="text-white code-font">${item}</span>
+                        <button class="text-red-400 hover:text-red-300 text-sm" onclick="removeFromWhitelist(${index})">Remove</button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            populateBlacklist() {
+                const container = document.getElementById('blacklist-items');
+                if (!container) return;
+
+                container.innerHTML = '';
+                this.settings.blacklist.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'list-item p-3 rounded-lg flex items-center justify-between';
+                    div.innerHTML = `
+                        <span class="text-white code-font">${item}</span>
+                        <button class="text-red-400 hover:text-red-300 text-sm" onclick="removeFromBlacklist(${index})">Remove</button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            addToWhitelist() {
+                const input = document.getElementById('whitelist-input');
+                const value = input.value.trim();
+                
+                if (value && !this.settings.whitelist.includes(value)) {
+                    this.settings.whitelist.push(value);
+                    this.populateWhitelist();
+                    input.value = '';
+                    this.showNotification('Added to whitelist', 'success');
+                }
+            }
+
+            addToBlacklist() {
+                const input = document.getElementById('blacklist-input');
+                const value = input.value.trim();
+                
+                if (value && !this.settings.blacklist.includes(value)) {
+                    this.settings.blacklist.push(value);
+                    this.populateBlacklist();
+                    input.value = '';
+                    this.showNotification('Added to blacklist', 'success');
+                }
+            }
+
+            removeFromWhitelist(index) {
+                this.settings.whitelist.splice(index, 1);
+                this.populateWhitelist();
+                this.showNotification('Removed from whitelist', 'success');
+            }
+
+            removeFromBlacklist(index) {
+                this.settings.blacklist.splice(index, 1);
+                this.populateBlacklist();
+                this.showNotification('Removed from blacklist', 'success');
+            }
+
+            async resetSettings() {
+                if (confirm('Are you sure you want to reset all settings to defaults?')) {
+                    localStorage.removeItem('spamshield-settings');
+                    this.settings = this.loadSettings();
+
+                await fetch('http://localhost:5000/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.settings)
+            });
+
+                this.loadCurrentSettings();
+                this.populateLists();
+                this.showNotification('Settings reset to defaults', 'success');
+
+                }
+            }
+
+            exportSettings() {
+                const dataStr = JSON.stringify(this.settings, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'spamshield-settings.json';
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                this.showNotification('Settings exported successfully', 'success');
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg border transition-all duration-300 ${
+                    type === 'success' ? 'bg-green-900 border-green-400 text-green-100' :
+                    type === 'error' ? 'bg-red-900 border-red-400 text-red-100' :
+                    'bg-blue-900 border-blue-400 text-blue-100'
+                }`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Animate in
+                anime({
+                    targets: notification,
+                    opacity: [0, 1],
+                    translateX: [100, 0],
+                    duration: 300,
+                    easing: 'easeOutExpo'
+                });
+                
+                // Remove after delay
+                setTimeout(() => {
+                    anime({
+                        targets: notification,
+                        opacity: [1, 0],
+                        translateX: [0, 100],
+                        duration: 300,
+                        easing: 'easeOutExpo',
+                        complete: () => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }
+                    });
+                }, 3000);
+            }
+        }
+
+        // Global functions for HTML onclick events
+        function saveSettings() {
+            if (window.settingsManager) {
+                window.settingsManager.saveSettings();
+            }
+        }
+
+        function resetSettings() {
+            if (window.settingsManager) {
+                window.settingsManager.resetSettings();
+            }
+        }
+
+        function exportSettings() {
+            if (window.settingsManager) {
+                window.settingsManager.exportSettings();
+            }
+        }
+
+        function addToWhitelist() {
+            if (window.settingsManager) {
+                window.settingsManager.addToWhitelist();
+            }
+        }
+
+        function addToBlacklist() {
+            if (window.settingsManager) {
+                window.settingsManager.addToBlacklist();
+            }
+        }
+
+        function removeFromWhitelist(index) {
+            if (window.settingsManager) {
+                window.settingsManager.removeFromWhitelist(index);
+            }
+        }
+
+        function removeFromBlacklist(index) {
+            if (window.settingsManager) {
+                window.settingsManager.removeFromBlacklist(index);
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.settingsManager = new SettingsManager();
+        });
+    </script>
+</body>
+</html>

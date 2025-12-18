@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailGuard – Email Security Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cyber-dark: #0a0e1a;
+            --cyber-blue: #00d4ff;
+            --cyber-cyan: #06b6d4;
+            --cyber-green: #10b981;
+            --cyber-red: #ef4444;
+            --cyber-amber: #f59e0b;
+            --cyber-gray: #1f2937;
+        }
+        
+        * {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="%2300d4ff"/><circle cx="12" cy="12" r="8" fill="none" stroke="%2300d4ff" stroke-width="1" opacity="0.3"/></svg>'), auto;
+        }
+        
+        body {
+            background: var(--cyber-dark);
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+        }
+        
+        .glass-panel {
+            background: rgba(31, 41, 55, 0.3);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-panel:hover {
+            border-color: var(--cyber-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyber-blue), var(--cyber-cyan));
+            border: none;
+            color: var(--cyber-dark);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--cyber-blue);
+            color: var(--cyber-blue);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--cyber-blue);
+            color: var(--cyber-dark);
+        }
+        
+        .threat-score {
+            background: conic-gradient(var(--cyber-green) 0deg, var(--cyber-green) 0deg);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        
+        .threat-score::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: var(--cyber-dark);
+            border-radius: 50%;
+        }
+        
+        .risk-safe { color: var(--cyber-green); }
+        .risk-low { color: var(--cyber-amber); }
+        .risk-medium { color: #f97316; }
+        .risk-high { color: #dc2626; }
+        .risk-critical { color: #991b1b; }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--cyber-blue);
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-secure { background: var(--cyber-green); }
+        .status-warning { background: var(--cyber-amber); }
+        .status-danger { background: var(--cyber-red); }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .threat-item {
+            background: rgba(31, 41, 55, 0.4);
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .threat-item:hover {
+            background: rgba(31, 41, 55, 0.6);
+            transform: translateX(4px);
+        }
+        
+        .threat-critical { border-left-color: var(--cyber-red); }
+        .threat-high { border-left-color: #dc2626; }
+        .threat-medium { border-left-color: var(--cyber-amber); }
+        .threat-low { border-left-color: var(--cyber-green); }
+        
+        .analysis-output {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .loading-spinner {
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid var(--cyber-blue);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-50 backdrop-blur-md border-b border-cyan-500 border-opacity-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-cyan-600 rounded-md flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 3l8 4v5c0 5-3.5 9-8 9s-8-4-8-9V7l8-4z"/>
+                            </svg>
+                        </div>
+
+                        <span class="text-white font-bold text-xl">MailGuard</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-secure"></div>
+                        <span class="text-green-400 text-sm">Protected</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="nav-link active">Dashboard</a>
+                    <a href="threat-intelligence.html" class="nav-link" onclick="openThreatIntel()">Threat Intel</a>
+                    <a href="settings.html" class="nav-link">Settings</a>
+                    <div class="flex items-center space-x-2 bg-gray-800 bg-opacity-50 px-3 py-1 rounded-lg">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-red-400 text-sm code-font">3 Active Threats</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- Email Analyzer -->
+            <div id="email-analyzer" class="glass-panel rounded-xl p-8 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-3xl font-bold text-white mb-2">Email Security Analyzer</h1>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-green-400 text-sm">Threat monitoring enabled</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Email Input -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-black bg-opacity-50 rounded-lg p-6 border border-gray-700">
+                            <label class="block text-cyan-400 text-sm font-bold mb-3">Email Content</label>
+                            <textarea 
+                                id="email-input" 
+                                class="w-full h-64 bg-gray-900 border border-gray-600 rounded-lg p-4 text-green-400 code-font text-sm resize-none focus:border-cyan-400 focus:outline-none transition-colors"
+                                placeholder="Paste your email content here for analysis..."
+                            ></textarea>
+                            
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex space-x-3">
+                                    <button id="analyze-btn" class="btn-primary px-6 py-2 rounded-lg text-sm">
+                                        Analyze Email
+                                    </button>
+                                    <button id="clear-btn" class="btn-secondary px-6 py-2 rounded-lg text-sm">
+                                        Clear
+                                    </button>
+                                </div>
+                                <div class="text-sm text-gray-400">
+                                    <span id="char-count">0</span> characters
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Threat Score -->
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="relative mb-6">
+                            <div class="threat-score w-48 h-48 flex items-center justify-center">
+                                <div class="relative z-10 text-center">
+                                    <div id="threat-score-display" class="text-4xl font-bold text-white mb-1">0</div>
+                                    <div class="text-sm text-gray-400">Threat Score</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mb-6">
+                            <div id="risk-level" class="text-2xl font-bold mb-2 risk-safe">Safe</div>
+                            <div class="text-sm text-gray-400">Risk Level</div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="text-xs text-gray-400 mb-2">Last Analysis</div>
+                            <div id="last-analysis" class="text-sm text-cyan-400">Never</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Results -->
+            <div id="analysis-results" class="hidden">
+                <!-- Detailed Scores -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-amber-400 font-bold">🎣 Phishing</h3>
+                            <div class="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1" id="phishing-score">0%</div>
+                        <div class="text-sm text-gray-400">Credential theft attempts</div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-red-400 font-bold">💰 Scam</h3>
+                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1" id="scam-score">0%</div>
+                        <div class="text-sm text-gray-400">Financial fraud attempts</div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-orange-400 font-bold">📧 Spam</h3>
+                            <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1" id="spam-score">0%</div>
+                        <div class="text-sm text-gray-400">Unwanted promotional content</div>
+                    </div>
+                    
+                    <div class="glass-panel rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-purple-400 font-bold">🎭 Social Engineering</h3>
+                            <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1" id="social-score">0%</div>
+                        <div class="text-sm text-gray-400">Manipulation tactics</div>
+                    </div>
+                </div>
+                
+                <!-- Analysis Details -->
+                <div class="glass-panel rounded-xl p-8 mb-8">
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-6">Detailed Analysis</h3>
+                    <div id="analysis-details" class="analysis-output rounded-lg p-6">
+                        <!-- Analysis details will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="glass-panel rounded-xl p-8">
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-6">Recommended Actions</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="block-sender" class="btn-primary px-6 py-3 rounded-lg">
+                             Block Sender
+                        </button>
+                        <button id="report-threat" class="btn-secondary px-6 py-3 rounded-lg">
+                             Report Threat
+                        </button>
+                        <button id="whitelist-sender" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors">
+                             Whitelist Sender
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-cyan-400 font-bold text-lg mb-1">Emails Analyzed</h3>
+                            <div class="text-3xl font-bold text-white" id="emails-analyzed">15,847</div>
+                            <div class="text-sm text-gray-400">This month</div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-green-400 font-bold text-lg mb-1">Threats Blocked</h3>
+                            <div class="text-3xl font-bold text-white" id="threats-blocked">1,092</div>
+                            <div class="text-sm text-gray-400">Successfully prevented</div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <div class="glass-panel rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-amber-400 font-bold text-lg mb-1">Detection Rate</h3>
+                            <div class="text-3xl font-bold text-white" id="detection-rate">99.2%</div>
+                            <div class="text-sm text-gray-400">Accuracy</div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="glass-panel rounded-xl p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-cyan-400">Recent Analysis Activity</h3>
+                    <button class="text-cyan-400 hover:text-cyan-300 text-sm">View All</button>
+                </div>
+                
+                <div class="space-y-4" id="recent-activity">
+                    <!-- Activity items will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-50 border-t border-cyan-500 border-opacity-20 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center space-x-2 mb-4">
+                <div class="w-8 h-8 bg-cyan-600 rounded-md flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3l8 4v5c0 5-3.5 9-8 9s-8-4-8-9V7l8-4z"/>
+                    </svg>
+                </div>
+
+                <span class="text-cyan-400 font-bold text-lg">MailGuard</span>
+            </div>
+            <p class="text-gray-400 text-sm">© 2025 Advanced email threat detection. Professional email threat detection with deterministic analysis.</p>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+  function openThreatIntel() {
+    const proceed = confirm(
+      "Threat Intelligence is still under development.\nData shown is sample only.\n\nContinue anyway?"
+    );
+
+    if (proceed) {
+      window.location.href = "threat-intelligence.html";
+    }
+  }
+</script>
+
+</body>
+</html>
