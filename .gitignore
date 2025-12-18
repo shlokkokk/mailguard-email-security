@@ -4,3 +4,4 @@ __pycache__/
 .env
 interaction.md
 outline.md
+design.md
